@@ -1,0 +1,8 @@
+{
+    "checkJs": true,
+    "compilerOptions": {
+        "target": "es2018"
+    },
+    "include": ["src/**/*", "node_modules/phaser/typescript/*"]
+    
+}
