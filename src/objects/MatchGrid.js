@@ -1,5 +1,6 @@
-import { Group, Point, Time } from "phaser";
+import { Group } from "phaser";
 import MatchItem from "./MatchItem";
+import DonutItem from "./DonutItem";
 
 class MatchGrid extends Group{
 	constructor(game, x, y, width, height, cellSize) {
@@ -16,35 +17,52 @@ class MatchGrid extends Group{
 		this.inputEnableChildren = true;
 		this.minMatchNum = 3;
 		this.isTrying = false;
+		this.score = 0;
+		this.enabled = false;
 	}
 	createItems(){
-		
 		this.fillItems();
 		this.addMultiple(this.itemsGrid);
 		this.align(this.rows, this.cols, this.cellSize, this.cellSize, Phaser.CENTER);
 		console.log('group childs '+this.children.length);
-		
-		this.game.input.onUp.add(this.onItemUp, this);
-		this.onChildInputOver.add(this.onItemOver, this);
-		this.onChildInputDown.add(this.onItemDown, this);
-		this.itemsGrid.forEach(el => el.create());
-		
+		this.itemsGrid.forEach(el => el.spawn());
+		this.enable();
 	}
-	update(){
-
+	respawnItems(){
+		this.itemsGrid.forEach(el => el.respawn());
+		this.enable();
+	}
+	onSpawned(){
+	
+	}
+	enable(){
+		if(!this.enabled){
+			this.game.input.onUp.add(this.onItemUp, this);
+			this.onChildInputOver.add(this.onItemOver, this);
+			this.onChildInputDown.add(this.onItemDown, this);
+			this.enabled = true;
+		}
+	}
+	disable(){
+		if(this.enabled){
+			this.game.input.onUp.remove(this.onItemUp, this);
+			this.onChildInputOver.remove(this.onItemOver, this);
+			this.onChildInputDown.remove(this.onItemDown, this);
+			this.enabled = false;
+		}
 	}
 	fillItems(){
 		let i, j;
 		for(i = 0; i < this.rows; ++i){
 			for(j = 0; j < this.cols; ++j){
-				this.itemsGrid.push(new MatchItem(this.game, i, j));
+				this.itemsGrid.push(new DonutItem(this.game, this, i, j));
 			}
 		}
 	}
 	onItemOver(target, pointer){
 		if(target instanceof MatchItem){
 			if(pointer.isDown && this.lastSelected && !target.isSelected){
-				if(this.isNeighborTo(this.lastSelected, target) && this.isAcceptableTypes(this.lastSelected, target)){
+				if(this.isNeighborTo(this.lastSelected, target) && target.isAcceptableTo(this.lastSelected)){
 					this.selectItem(target);
 				}
 			}
@@ -70,8 +88,7 @@ class MatchGrid extends Group{
 		}
 	}
 	fallDown(){
-		let r, c,
-			e = 0;
+		let r, c, e;
 		for(c = 0; c < this.cols; ++c){
 			e = 0;
 			for(r = this.rows-1; r >= 0; --r){
@@ -114,12 +131,36 @@ class MatchGrid extends Group{
 		console.log('all items unselected');
 	}
 	removeSelected(){
+
+		this.selectedItems.forEach(el => el.checkAction());
 		this.selectedItems.forEach(el => el.remove());
 		this.lastSelected = null;
 	}
 	spawnRemoved(){
-		this.selectedItems.forEach(el => el.spawn());
+		this.selectedItems.forEach(el => el.respawn());
 		this.selectedItems = [];
+	}
+	countScore(){
+		
+	}
+	selectRow(r){
+		for(let c = 0; c < this.cols; ++c){
+			let item = this.itemsGrid[r*this.rows+c];
+			if(!item.isSelected && item.alive){
+				this.selectedItems.push(item);
+			}
+		}
+	}
+	selectColumn(c){
+		for(let r = 0; r < this.rows; ++r){
+			let item = this.itemsGrid[r*this.rows+c];
+			if(!item.isSelected && item.alive){
+				this.selectedItems.push(item);
+			}
+		}
+	}
+	selectAllType(t){
+		this.selectedItems.push(this.itemsGrid.filter(el => el.type === t && !el.isSelected  && el.alive));
 	}
 	isNeighborTo(item, neighbor){
 		if(Math.abs(item.row - neighbor.row) <= 1 && Math.abs(item.column - neighbor.column) <= 1){
@@ -127,9 +168,7 @@ class MatchGrid extends Group{
 		}
 		return false;
 	}
-	isAcceptableTypes(item, item2){
-		return item.type === item2.type;
-	}
+
 }
 
 export default MatchGrid;

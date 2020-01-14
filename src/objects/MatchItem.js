@@ -1,76 +1,60 @@
-import { Image, Sprite, RandomDataGenerator } from 'phaser';
+import { Sprite } from 'phaser';
 
 class MatchItem extends Sprite {
-	
-	constructor(game, row, column) {
+	constructor(game, matchGrid, row, column) {
 		super(game, 0, 0);
+		this.matchGrid = matchGrid;
 		this.row = row;
 		this.column = column;
 		this.anchor.set(0.5);
-		this.inputEnabled = true;
-		this.events.onInputOver.add(this.onOver, this);
-		this.events.onInputOut.add(this.onOut, this);
-		this.overTween = this.game.add.tween(this.scale).to({x: 1.1, y:1.1}, 200);
-		this.outTween = this.game.add.tween(this.scale).to({x: 1, y:1}, 200);
-		this.spawnTween = this.game.add.tween(this.scale).to({x: 1, y: 1}, 500, );
-		this.removeTween = this.game.add.tween(this.scale).to({x: 0, y:0}, 500, Phaser.Easing.Back.In);
-		this.selectedTween = this.game.add.tween(this).to({alpha: 0.5}, 500).yoyo(true);
 		this.isSelected = false;
 	}
-	create(){
-		this.type = this.game.rnd.pick(Object.keys(MatchItem.TYPES));
-		this.shadow = new Image(this.game, 5, 10, 'itemShadow');
-		this.shadow.anchor.set(0.5);
-		this.item = new Sprite(this.game, 0, 0, MatchItem.TYPES[this.type]);
-		this.item.anchor.set(0.5);
-		this.addChild(this.shadow);
-		this.addChild(this.item);
-		
-		this.game.add.tween(this.scale).from({x:0,y:0}, 500, Phaser.Easing.Back.Out, true);
-		this.alive = true;
-	}
 	spawn(type = null){
-		if(type && MatchItem.TYPES[type]){
-			this.type = type;
-		}else{
-			this.type = this.game.rnd.pick(Object.keys(MatchItem.TYPES));
-		}
-		let itemTextureKey = MatchItem.TYPES[this.type];
-		this.item.loadTexture(itemTextureKey);
-		this.scale.set(0);
-		this.spawnTween.start();
-		this.alive = true;
+		this.setTypeOrRandom(type);
+		this.onSpawned();
+	}
+	respawn(type = null){
+		this.setTypeOrRandom(type);
+		this.onSpawned();
 	}
 	remove(){
-		this.removeTween.start();
 		this.unselect();
 		this.alive = false;
 	}
+	onSpawned(){
+		this.alive = true;
+	}
+	onRemoved(){}
 	select(){
 		if(this.alive){
-			this.selectedTween.loop(true).start();
+			this.onSelected();
 			this.isSelected = true;
 		}
 	}
 	unselect(){
-		this.selectedTween.loop(false);
-		this.alpha = 1;
+		this.onUnselected();
 		this.isSelected = false;
 	}
-	onOver(target, pointer){
-		if(this.alive)
-			this.overTween.start();
-		
+	onSelected(){}
+	onUnselected(){}
+	setTypeOrRandom(type = null){
+		if(type && this.isValidType(type)){
+			this.type = type;
+		}else{
+			this.type = this.getRandomType();
+		}
 	}
-	onOut(target, pointer){
-		if(this.alive)
-			this.outTween.start();
-		
+	getRandomType(){
+		return this.game.rnd.pick(Object.keys(MatchItem.TYPES));
 	}
-	//static bonusTypes = ['item7','item8','item9','item10','item11','item12'];
-	
+	isValidType(type){
+		return MatchItem.TYPES.hasOwnProperty(type);
+	}
+	isAcceptableTo(item2){
+		return this.type === item2.type;
+	}
 }
 MatchItem.TYPES = {
-	RED: 'item1', BLUE: 'item2', GREEN: 'item3', LIGHTBLUE: 'item4', YELLOW: 'item5', PINK: 'item6'};
-
+	A: 1, B: 2, C: 3, D: 4, E: 5, F: 6
+};
 export default MatchItem;

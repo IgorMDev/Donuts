@@ -1,10 +1,14 @@
 
 class ScoreManager {
 
-	constructor(game) {
+	constructor() {
+		
+	}
+	countScore(items){
+		
+		for(let item of items){
 
-		super(game);
-
+		}
 	}
 
 }

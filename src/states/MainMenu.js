@@ -1,3 +1,4 @@
+import GameOver from "../objects/GameOver";
 
 
 class MainMenu extends Phaser.State {
@@ -27,6 +28,7 @@ class MainMenu extends Phaser.State {
 		playBtn.anchor.set(0.5);
 		this.playBtnOverTween = this.add.tween(playBtn).to({width: playBtn.width + 32}, 200, Phaser.Easing.Quadratic.In);
 		this.playBtnOutTween = this.add.tween(playBtn).to({width: playBtn.width}, 200, Phaser.Easing.Quadratic.In);
+		
 	}
 	update(){
 
@@ -34,7 +36,7 @@ class MainMenu extends Phaser.State {
 	onPlayBtnClick(target, pointer){
 		console.log('sender '+target);
 		console.log('pointer '+pointer.x+','+pointer.y);
-		
+		//this.state.start('GameState');
 	}
 	onPlayBtnOver(target, pointer){
 		this.playBtnOverTween.start();

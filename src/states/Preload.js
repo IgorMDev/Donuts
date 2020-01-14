@@ -7,6 +7,21 @@ class Preload extends Phaser.State {
 		this.load.image('logo','assets/images/donuts_logo.png');
 		this.load.image('scoreBoard','assets/images/bg-score.png');
 		this.load.image('playBtn', 'assets/images/btn-play.png');
+		this.load.image('timeUp', 'assets/images/text-timeup.png');
+		this.load.image('sfxBtn', 'assets/images/btn-sfx.png');
+		this.load.image('item1','assets/images/game/gem-01.png');
+		this.load.image('item2','assets/images/game/gem-02.png');
+		this.load.image('item3','assets/images/game/gem-03.png');
+		this.load.image('item4','assets/images/game/gem-04.png');
+		this.load.image('item5','assets/images/game/gem-05.png');
+		this.load.image('item6','assets/images/game/gem-06.png');
+		this.load.image('item7','assets/images/game/gem-07.png');
+		this.load.image('item8','assets/images/game/gem-08.png');
+		this.load.image('item9','assets/images/game/gem-09.png');
+		this.load.image('item10','assets/images/game/gem-10.png');
+		this.load.image('item11','assets/images/game/gem-11.png');
+		this.load.image('item12','assets/images/game/gem-12.png');
+		this.load.image('itemShadow','assets/images/game/shadow.png');
 	}
 	create() {
 		this.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
