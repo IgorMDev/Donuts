@@ -6,10 +6,8 @@ class Game extends Phaser.Game {
 
 	constructor(config) {
 		super(config);
-		//this.load.image('background','assets/images/backgrounds/background.jpg');
 		this.state.add('MainMenu', MainMenu, false);
 		this.state.add('GameState', GameState, false);
-		//this.state.start('MainMenu');
 		
 	}
 }

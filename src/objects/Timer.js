@@ -1,8 +1,6 @@
-import { Graphics, Timer, Signal } from "phaser";
-
+import { Signal } from "phaser";
 
 class ProgressTimer{
-
 	constructor(game, x, y, width, height) {
 		this.game = game;
 		this.x = x;
@@ -10,12 +8,12 @@ class ProgressTimer{
 		this.width = width;
 		this.height = height;
 		this.timer = game.time.create(false);
-		this.g = game.add.graphics(x,y);
-		this.g1 = game.add.graphics(x,y);
-		this.msDuration = 0;
+		this.g = this.game.add.graphics(x,y);
+		this.g1 = this.game.add.graphics(x,y);
+		this.msDuration = 10000;
 		this.msCounter = 0;
 		this.step = 125;
-		this.onTimeOut = new Signal();
+		this.onTimeUp = new Signal();
 		this.drawOuter();
 		this.drawProgress(width);
 	}
@@ -34,13 +32,14 @@ class ProgressTimer{
 	}
 	loop(){
 		
-		//this.drawProgress(this.msCounter/this.msDuration);
 		this.g1.width = this.msCounter/this.msDuration * this.width;
 	}
 	timeOut(){
 		this.timer.stop();
-		this.onTimeOut.dispatch();
-		console.log('time out');
+		this.onTimeUp.dispatch();
+	}
+	stop(){
+		this.timer.stop();
 	}
 	drawOuter(){
 		this.g.beginFill(0x555555);

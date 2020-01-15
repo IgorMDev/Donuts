@@ -1,7 +1,6 @@
 import { Image } from "phaser";
 
 class Preload extends Phaser.State {
-
 	preload(){
 		this.load.image('background','assets/images/backgrounds/background.jpg');
 		this.load.image('logo','assets/images/donuts_logo.png');
@@ -22,6 +21,10 @@ class Preload extends Phaser.State {
 		this.load.image('item11','assets/images/game/gem-11.png');
 		this.load.image('item12','assets/images/game/gem-12.png');
 		this.load.image('itemShadow','assets/images/game/shadow.png');
+		this.load.audio('background', 'assets/audio/background.mp3');
+		this.load.audio('kill', 'assets/audio/kill.mp3');
+		this.load.audio('select', 'assets/audio/select-1.mp3');
+		this.load.onLoadComplete.add(this.startGame, this);
 	}
 	create() {
 		this.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
@@ -31,11 +34,13 @@ class Preload extends Phaser.State {
 		bg.scale.set(this.stage.height/bg.height)
 		bg.anchor.set(0.5);
 		this.stage.addChildAt(bg,0);
-		this.state.start('GameState');
-		//this.state.start('MainMenu');
-		
 	}
-	
+	startGame(){
+		this.bgAudio = this.add.audio('background', 0.3, true)
+		this.bgAudio.play();
+		this.sound.onUnMute.add(()=>{this.bgAudio.play()});
+		this.state.start('MainMenu');
+	}
 }
 
 export default Preload;
