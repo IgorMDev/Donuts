@@ -13,17 +13,18 @@ class GameState extends Phaser.State {
 	}
 	create() {
 		let center = { x: this.game.world.centerX, y: this.game.world.centerY }
-		let gridWidth = (this.world.width-30),
-			gridHeight = this.world.height*0.6;
-		let offset = (this.world.width-gridWidth)/2;
+		
 
 		this.scoreLabel = new ScoreLabel(this.game, center.x, 120, 0);
-		//this.scoreLabel.anchor.set(0.5, 0);
 		this.add.existing(this.scoreLabel);
 
-		this.timer = new ProgressTimer(this.game, 5, 150, 700, 64);
-		
-		this.matchGrid = new MatchGrid(this.game, offset, 500, gridWidth, gridHeight, gridWidth/7);
+		let timerWidth = 680,
+			timerHeight = 80;
+		this.timer = new ProgressTimer(this.game, (this.world.width-timerWidth)/2, 250, timerWidth, timerHeight);
+
+		let gridWidth = 700,
+			gridHeight = 800;
+		this.matchGrid = new MatchGrid(this.game,(this.world.width-gridWidth)/2, 400, gridWidth, gridHeight, 8, 7);
 		this.matchGrid.onTimeAdd.add(this.timer.addSeconds, this.timer);
 		this.matchGrid.onScoreChanged.add(this.scoreLabel.setValue, this.scoreLabel);
 		let g = this.game.make.graphics(0,0);

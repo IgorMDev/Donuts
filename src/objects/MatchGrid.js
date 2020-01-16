@@ -3,18 +3,20 @@ import MatchItem from "./MatchItem";
 import TextPopup from "./TextPopup";
 
 class MatchGrid extends Group{
-	constructor(game, x, y, width, height, cellSize) {
+	constructor(game, x, y, width, height, rows, cols) {
 		super(game);
 		this.itemsGroup = this.game.add.group(this);
 		this.itemsGroup.inputEnableChildren = true;
 		this.position.set(x, y);
 		this.width = width;
 		this.height = height;
-		this.cellSize = cellSize;
-		this.rows = Math.floor(width/cellSize);
-		this.cols = Math.floor(height/cellSize);
+		this.cellWidth = width/cols;
+		this.cellHeight = height/rows;
+		this.rows = rows;
+		this.cols = cols;
 		this.itemsGrid = [];
 		this.selectedItems = [];
+		this.removedItems = [];
 		this.lastSelected = null;
 		this.firstSelected = null;
 		this.minMatchNum = 3;
@@ -27,7 +29,6 @@ class MatchGrid extends Group{
 		this.popupText = new TextPopup(this.game);
 		this.popupText.anchor.set(0.5,1);
 		this.addChild(this.popupText);
-
 		this.killSound = this.game.add.sound('kill');
 		this.selectSound = this.game.add.sound('select');
 		this.selectSound.addMarker('1', 0, 250);
@@ -35,8 +36,10 @@ class MatchGrid extends Group{
 	createItems(){
 		if(!this.itemsGrid.length){
 			this.fillItems();
+			
 			this.itemsGroup.addMultiple(this.itemsGrid);
-			this.itemsGroup.align(this.rows, this.cols, this.cellSize, this.cellSize, Phaser.CENTER);
+			this.itemsGroup.align(this.cols, this.rows, this.cellWidth-1, this.cellHeight, Phaser.CENTER);
+			this.itemsGroup.scale.set(1);
 		}
 		this.enable();
 	}
@@ -91,7 +94,7 @@ class MatchGrid extends Group{
 		this.endSelect();
 	}
 	beginSelect(item){
-		if(!this.firstSelected && item.isBasicType()){
+		if(!this.firstSelected && item.isBasicType() && !item.isSelected){
 			this.firstSelected = item;
 			this.selectItem(item);
 			this.isTrying = true;
@@ -111,8 +114,8 @@ class MatchGrid extends Group{
 				this.removeSelected();
 				setTimeout(()=> {
 					this.fallDown();
-					this.spawnRemoved()
-				}, 800);
+					this.spawnRemoved();
+				}, 500);
 			}else if(this.selectedItems.length ){
 				this.unselectAllItems();
 			}
@@ -157,21 +160,22 @@ class MatchGrid extends Group{
 		this.killSound.play();
 		this.selectedItems.forEach(el => el.remove());
 		this.lastSelected = this.firstSelected = null;
+		this.removedItems.push(...this.selectedItems.splice(0));
+		//this.spawnSomeItems(this.selectedItems.splice(0));
 	}
 	spawnRemoved(){
-		this.selectedItems.forEach(el => el.spawn(true));
-		this.selectedItems = [];
+		this.removedItems.splice(0).forEach(el => el.spawn(true));
 	}
 	fallDown(){
 		let r, c, e;
 		for(c = 0; c < this.cols; ++c){
 			e = 0;
 			for(r = this.rows-1; r >= 0; --r){
-				let i = r*this.rows+c;
+				let i = r*this.cols+c;
 				let item = this.itemsGrid[i];
 				if(item){
 					if(item.alive && e > 0){
-						let j = (r+e)*this.rows+c;
+						let j = (r+e)*this.cols+c;
 						this.swapItems(i, j);
 					}else if(!item.alive){
 						++e;
@@ -190,7 +194,7 @@ class MatchGrid extends Group{
 	}
 	selectRow(r){
 		for(let c = 0; c < this.cols; ++c){
-			let item = this.itemsGrid[r*this.rows+c];
+			let item = this.itemsGrid[r*this.cols+c];
 			if(!item.isSelected && item.alive){
 				this.selectedItems.push(item);
 				item.isSelected = true;
@@ -199,7 +203,7 @@ class MatchGrid extends Group{
 	}
 	selectColumn(c){
 		for(let r = 0; r < this.rows; ++r){
-			let item = this.itemsGrid[r*this.rows+c];
+			let item = this.itemsGrid[r*this.cols+c];
 			if(!item.isSelected && item.alive){
 				this.selectedItems.push(item);
 				item.isSelected = true;

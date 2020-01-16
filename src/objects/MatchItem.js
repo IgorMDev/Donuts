@@ -32,14 +32,15 @@ class MatchItem extends Sprite {
 		let itemTextureKey = MatchItem.Types[this.type] || MatchItem.BonusTypes[this.type];
 		if(itemTextureKey)
 			this.item.loadTexture(itemTextureKey);
+		this.unselect();
+		this.alive = true;
 		this.scale.set(0);
 		this.spawnTween.start();
-		this.alive = true;
 	}
 	remove(){
-		this.removeTween.start();
 		this.unselect();
 		this.alive = false;
+		this.removeTween.start();
 	}
 	collect(){
 		let action = MatchItem.Actions[this.type];
@@ -53,9 +54,11 @@ class MatchItem extends Sprite {
 		}
 	}
 	unselect(){
-		this.selectedTween.loop(false);
-		this.alpha = 1;
-		this.isSelected = false;
+		if(this.isSelected){
+			this.selectedTween.loop(false);
+			this.alpha = 1;
+			this.isSelected = false;
+		}
 	}
 	onOver(target, pointer){
 		if(this.alive){
