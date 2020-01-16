@@ -16,26 +16,31 @@ class MatchItem extends Sprite {
 		this.spawnTween = this.game.add.tween(this.scale).to({x: 1, y: 1}, 500, );
 		this.removeTween = this.game.add.tween(this.scale).to({x: 0, y:0}, 500, Phaser.Easing.Back.In);
 		this.selectedTween = this.game.add.tween(this).to({alpha: 0.5}, 500).yoyo(true);
-		
+		this.type = 1;
 		this.setRandomType();
+		this.name = MatchItem.Names[this.type];
 		this.shadow = this.game.make.image(5, 10, 'itemShadow');
 		this.shadow.anchor.set(0.5);
-		this.item = this.game.make.sprite(0, 0, MatchItem.Types[this.type]);
+		this.item = this.game.make.sprite(0, 0, this.name);
 		this.item.anchor.set(0.5);
 		this.addChild(this.shadow);
 		this.addChild(this.item);
 		this.scale.set(0);
 		this.spawnTween.start();
 	}
-	spawn(bonus = false){
-		this.setRandomType(bonus);
-		let itemTextureKey = MatchItem.Types[this.type] || MatchItem.BonusTypes[this.type];
-		if(itemTextureKey)
-			this.item.loadTexture(itemTextureKey);
+	spawn(){
+		let name = MatchItem.Names[this.type];
+		if(name !== this.name) this.item.loadTexture(this.name=name);
+		
 		this.unselect();
 		this.alive = true;
 		this.scale.set(0);
 		this.spawnTween.start();
+	}
+	spawnRandom(bonus = false){
+		this.setRandomType(bonus);
+		
+		this.spawn();
 	}
 	remove(){
 		this.unselect();
@@ -49,7 +54,7 @@ class MatchItem extends Sprite {
 	}
 	select(){
 		if(this.alive && !this.isSelected){
-			this.selectedTween.loop(true).start();
+			//this.selectedTween.loop(true).start();
 			this.isSelected = true;
 		}
 	}
@@ -77,6 +82,12 @@ class MatchItem extends Sprite {
 			this.type = this.game.rnd.pick(Object.keys(MatchItem.Types));
 		}
 	}
+	setRandomTypeExcept(...types){
+		console.log('rand except '+types);
+		do{
+			this.type = this.game.rnd.pick(Object.keys(MatchItem.Types));
+		}while(types.indexOf(this.type) >= 0);
+	}
 	isValidType(type){
 		return MatchItem.Types.hasOwnProperty(type) || MatchItem.BonusTypes.hasOwnProperty(type);
 	}
@@ -91,11 +102,15 @@ class MatchItem extends Sprite {
 		return MatchItem.BonusTypes.hasOwnProperty(this.type)
 	}
 }
+MatchItem.Names = {
+	RED: 'item1', BLUE: 'item2', GREEN: 'item3', LIGHTBLUE: 'item4', YELLOW: 'item5', PINK: 'item6',
+	ALL: 'item7', ROW_COL: 'item8', COL: 'item9', ROW: 'item10', FIVE_SEC: 'item11', SCORE_DOUBLE: 'item12'
+}
 MatchItem.Types = {
-	RED: 'item1', BLUE: 'item2', GREEN: 'item3', LIGHTBLUE: 'item4', YELLOW: 'item5', PINK: 'item6'
+	RED: 1, BLUE: 2, GREEN: 3, LIGHTBLUE: 4, YELLOW: 5, PINK: 6
 };
 MatchItem.BonusTypes = {
-	ALL: 'item7', ROW_COL: 'item8', COL: 'item9', ROW: 'item10', FIVE_SEC: 'item11', SCORE_DOUBLE: 'item12'
+	ALL: 7, ROW_COL: 8, COL: 9, ROW: 10, FIVE_SEC: 11, SCORE_DOUBLE: 12
 };
 MatchItem.Actions = {
 	ALL(item){

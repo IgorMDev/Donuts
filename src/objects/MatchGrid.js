@@ -41,6 +41,7 @@ class MatchGrid extends Group{
 			this.itemsGroup.align(this.cols, this.rows, this.cellWidth-1, this.cellHeight, Phaser.CENTER);
 			this.itemsGroup.scale.set(1);
 		}
+		this.reset();
 		this.enable();
 	}
 	reset(){
@@ -48,12 +49,45 @@ class MatchGrid extends Group{
 		this.selectedItems = [];
 		this.lastSelected = null;
 		this.firstSelected = null;
+		for(let i = 0; i < this.itemsGrid.length; ++i){
+			let item = this.itemsGrid[i];
+			//item.setRandomType();
+			this.checkDifference(item);
+		}
 		this.spawnItems();
 		this.onScoreChanged.dispatch(this.scores);
 	}
 	spawnItems(){
-		this.itemsGrid.forEach(el => el.spawn());
+		this.itemsGrid.forEach(el=> el.spawn());
 		this.enable();
+	}
+	checkDifference(item){
+		let r = item.row, c = item.column;
+		let exc;
+		if(r-1 >= 0 && r+1 < this.rows){
+			console.log('row diff');
+			let p = this.itemsGrid[this.ij(r-1,c)],
+				n = this.itemsGrid[this.ij(r+1,c)];
+			if(p.type === item.type && n.type === item.type){
+				exc = item.type;
+				console.log('exc ' + exc);
+			}
+		}
+		if(!exc && c-1 >= 0 && c+1 < this.cols){
+			console.log('col diff');
+			let p = this.itemsGrid[this.ij(r,c-1)],
+				n = this.itemsGrid[this.ij(r,c+1)];
+			if(p.type === item.type && n.type === item.type){
+				exc = item.type;
+				console.log('exc ' + exc);
+			}
+		}
+		if(exc)
+			item.setRandomTypeExcept(exc);
+
+	}
+	ij(i,j){
+		return i*this.cols+j;
 	}
 	enable(){
 		if(!this.enabled){
@@ -82,59 +116,73 @@ class MatchGrid extends Group{
 	}
 	onItemOver(target, pointer){
 		if(pointer.isDown && target instanceof MatchItem){
-			this.trySelect(target);
+			this.endSwap(target);
 		}
 	}
 	onItemDown(target, pointer){
 		if(target instanceof MatchItem){
-			this.beginSelect(target);
+			this.beginSwap(target);
 		}
 	}
 	onItemUp(target, pointer){
-		this.endSelect();
+		//this.endSwap();
 	}
-	beginSelect(item){
-		if(!this.firstSelected && item.isBasicType() && !item.isSelected){
+	
+	beginSwap(item){
+		if(!this.isTrying && item.isBasicType()){
 			this.firstSelected = item;
-			this.selectItem(item);
+			//this.selectItem(item);
 			this.isTrying = true;
 		}
+		
 	}
-	trySelect(item){
-		if(this.lastSelected && !item.isSelected){
-			if(this.isNeighborTo(this.lastSelected, item) && item.isAcceptableTo(this.firstSelected)){
-				this.selectItem(item);
+	endSwap(item){
+		if(this.isTrying && !this.lastSelected){
+			if(this.isNeighborTo(this.firstSelected, item)){
+				//this.selectItem(item);
+				this.lastSelected = item;
+				this.swapItems(this.firstSelected, this.lastSelected);
+				this.checkMatchAtItem(this.firstSelected);
+				this.checkMatchAtItem(this.lastSelected);
+				console.log('try select , items length '+this.selectedItems.length);
+				if(this.selectedItems.length < this.minMatchNum){
+					setTimeout(()=>{
+						this.swapItems(this.firstSelected, this.lastSelected);
+						this.firstSelected = this.lastSelected = null;
+						this.isTrying = false;
+					},300);
+					
+				}else{
+					this.checkSelected();
+					this.isTrying = false;
+				}
+				
 			}
+			
 		}
 	}
-	endSelect(){
-		if(this.isTrying){
-			if(this.selectedItems.length >= this.minMatchNum){
-				this.collectSelected();
-				this.removeSelected();
-				setTimeout(()=> {
-					this.fallDown();
-					this.spawnRemoved();
-				}, 500);
-			}else if(this.selectedItems.length ){
-				this.unselectAllItems();
-			}
-			this.isTrying = false;
+	checkSelected(){
+		if(this.selectedItems.length >= this.minMatchNum){
+			this.collectSelected();
+			this.removeSelected();
+			setTimeout(()=> {
+				this.fallDown();
+				this.spawnRemoved();
+			}, 500);
+			setTimeout(()=> {
+				this.checkMatches();
+				this.checkSelected();
+			}, 1000);
+		}else{
+			
+			//this.unselectAllItems();
 		}
 	}
 	selectItem(item){
 		item.select();
 		this.selectSound.play('1');
-		this.selectedItems.push(this.lastSelected = item);
-	}
-	unselectLastItem(){
-		let item = this.selectedItems.pop()
-		item.unselect();
-		if(this.selectedItems.length){
-			this.lastSelected = this.selectedItems[this.selectedItems.length - 1];
-		}else{
-			this.lastSelected = this.firstSelected = null;
-		}
+		this.lastSelected = item
+		//this.selectedItems.push(item);
 	}
 	unselectAllItems(){
 		this.selectedItems.forEach(el => el.unselect());
@@ -153,7 +201,8 @@ class MatchGrid extends Group{
 		collectedScores *= (this.selectedItems.length / this.minMatchNum)*this.scoreMultiplier;
 		collectedScores = Phaser.Math.roundTo(collectedScores, 0);
 		this.scores += collectedScores;
-		this.popupText.showUpAt(this.lastSelected.x, this.lastSelected.y, collectedScores+'');
+		let rItem = this.game.rnd.pick(this.selectedItems);
+		this.popupText.showUpAt(rItem.x, rItem.y, collectedScores+'');
 		this.onScoreChanged.dispatch(this.scores);
 	}
 	removeSelected(){
@@ -164,7 +213,98 @@ class MatchGrid extends Group{
 		//this.spawnSomeItems(this.selectedItems.splice(0));
 	}
 	spawnRemoved(){
-		this.removedItems.splice(0).forEach(el => el.spawn(true));
+		this.removedItems.splice(0).forEach(el => el.spawnRandom());
+	}
+	checkMatchAtItem(item){
+		let ir = item.row, 
+			ic = item.column;
+		let item2;
+		let cl = ic, cr = ic,
+			rb = ir, rt = ir;
+		let i;
+		//left
+		for(i = ic - 1; i >= 0; --i){
+			item2 = this.itemsGrid[ir*this.cols+i];
+			if(item2.type === item.type){
+				cl = i;
+				continue;
+			}
+			break;
+		}
+		//right
+		for(i = ic + 1; i < this.cols; ++i){
+			item2 = this.itemsGrid[ir*this.cols+i];
+			if(item2.type === item.type){
+				cr = i;
+				continue;
+			}
+			break;
+		}
+		//top
+		for(i = ir - 1; i >= 0; --i){
+			item2 = this.itemsGrid[i*this.cols+ic];
+			if(item2.type === item.type){
+				rt = i;
+				continue;
+			}
+			break;
+		}
+		//bottom
+		for(i = ir + 1; i < this.rows; ++i){
+			item2 = this.itemsGrid[i*this.cols+ic];
+			if(item2.type === item.type){
+				rb = i;
+				continue;
+			}
+			break;
+		}
+		let dc = cr - cl + 1,
+			dr = rb - rt + 1;
+		if(dc >= this.minMatchNum) this.selectRow(ir, cl, cr+1);
+		if(dr >= this.minMatchNum) this.selectColumn(ic, rt, rb+1);
+	}
+	checkMatches(){
+		for(let r = 0; r < this.rows; ++r){
+			this.checkMatchAtRow(r);
+		}
+		for(let c = 0; c < this.cols; ++c){
+			this.checkMatchAtCol(c);
+		}
+	}
+	checkMatchAtRow(r){
+		console.log('check row '+r);
+		let item,item2, c, c1;
+		for(c = 0; c < this.cols; ++c){
+			item = this.itemsGrid[r*this.cols+c];
+			c1 = c+1
+			for(; c1 < this.cols; ++c1){
+				item2 = this.itemsGrid[r*this.cols+c1];
+				if(item.type !== item2.type) break;
+			}
+			if(c1 - c >= this.minMatchNum){
+				console.log('range '+(c1-c));
+				this.selectRow(r, c, c1);
+			}
+			c = c1;
+		}
+	}
+	checkMatchAtCol(c){
+		console.log('check col '+c);
+		let item, item2, r, r1;
+		for(r = 0; r < this.rows; ++r){
+			item = this.itemsGrid[r*this.cols+c];
+			r1 = r+1
+			for(; r1 < this.rows; ++r1){
+				item2 = this.itemsGrid[r1*this.cols+c];
+				if(item.type !== item2.type) break;
+			}
+			if(r1 - r >= this.minMatchNum){
+				console.log('range '+(r1-r));
+				this.selectColumn(c, r, r1);
+			}
+			r = r1;
+		}
+		
 	}
 	fallDown(){
 		let r, c, e;
@@ -176,7 +316,7 @@ class MatchGrid extends Group{
 				if(item){
 					if(item.alive && e > 0){
 						let j = (r+e)*this.cols+c;
-						this.swapItems(i, j);
+						this.swapItemsByIndex(i, j);
 					}else if(!item.alive){
 						++e;
 					}
@@ -184,7 +324,10 @@ class MatchGrid extends Group{
 			}
 		}
 	}
-	swapItems(i, j){
+	swapItems(item1, item2){
+		this.swapItemsByIndex(item1.row*this.cols + item1.column, item2.row* this.cols + item2.column);
+	}
+	swapItemsByIndex(i, j){
 		let item = this.itemsGrid[i],
 			item2 = this.itemsGrid[j];
 		this.itemsGrid[i] = item2;
@@ -192,22 +335,30 @@ class MatchGrid extends Group{
 		[item.position, item2.position] = [item2.position, item.position];
 		[item.row, item.column, item2.row, item2.column] = [item2.row, item2.column,item.row, item.column];
 	}
-	selectRow(r){
-		for(let c = 0; c < this.cols; ++c){
+	selectRow(r, c1, c2){
+		let c = c1 || 0;
+		let ct = c2 || this.cols;
+		console.log('selected row '+r+' are '+(ct-c));
+		while(c < ct){
 			let item = this.itemsGrid[r*this.cols+c];
 			if(!item.isSelected && item.alive){
 				this.selectedItems.push(item);
 				item.isSelected = true;
 			}
+			c++;
 		}
 	}
-	selectColumn(c){
-		for(let r = 0; r < this.rows; ++r){
+	selectColumn(c, r1, r2){
+		let r = r1 || 0;
+		let rt = r2 || this.rows;
+		console.log('selected col '+c+' are '+(rt-r));
+		while(r < rt){
 			let item = this.itemsGrid[r*this.cols+c];
 			if(!item.isSelected && item.alive){
 				this.selectedItems.push(item);
 				item.isSelected = true;
 			}
+			r++;
 		}
 	}
 	selectAllType(){

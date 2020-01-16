@@ -37,9 +37,10 @@ class Preload extends Phaser.State {
 	}
 	startGame(){
 		this.bgAudio = this.add.audio('background', 0.3, true)
-		this.bgAudio.play();
-		this.sound.onUnMute.add(()=>{this.bgAudio.play()});
-		this.state.start('MainMenu');
+		//this.bgAudio.play();
+		//this.sound.onUnMute.add(()=>{this.bgAudio.play()});
+		//this.state.start('MainMenu');
+		this.state.start('GameState');
 	}
 }
 

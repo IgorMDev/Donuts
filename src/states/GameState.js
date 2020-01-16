@@ -24,7 +24,7 @@ class GameState extends Phaser.State {
 
 		let gridWidth = 700,
 			gridHeight = 800;
-		this.matchGrid = new MatchGrid(this.game,(this.world.width-gridWidth)/2, 400, gridWidth, gridHeight, 8, 7);
+		this.matchGrid = new MatchGrid(this.game,(this.world.width-gridWidth)/2, 400, gridWidth, gridHeight, 7, 7);
 		this.matchGrid.onTimeAdd.add(this.timer.addSeconds, this.timer);
 		this.matchGrid.onScoreChanged.add(this.scoreLabel.setValue, this.scoreLabel);
 		let g = this.game.make.graphics(0,0);
@@ -37,8 +37,8 @@ class GameState extends Phaser.State {
 		this.gameOver.onRestart.add(this.restartGame, this);
 		this.gameOver.onMenu.add(this.endGame, this);
 
-		this.timer.onTimeUp.add(this.matchGrid.disable, this.matchGrid);
-		this.timer.onTimeUp.add(this.onTimeUp, this);
+		//this.timer.onTimeUp.add(this.matchGrid.disable, this.matchGrid);
+		//this.timer.onTimeUp.add(this.onTimeUp, this);
 
 		this.startGame();
 	}
