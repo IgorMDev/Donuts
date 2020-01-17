@@ -1,7 +1,8 @@
+import SfxButton from "../objects/SfxButton";
+import TextButton from "../objects/TextButton";
 
 class MainMenu extends Phaser.State {
-
-	create() {
+	create(){
 		let center = { x: this.world.centerX, y: this.world.centerY }
 		
 		this.logo = this.add.image(center.x, 64, 'logo');
@@ -12,8 +13,13 @@ class MainMenu extends Phaser.State {
 		this.playBtn.onInputOut.add(this.onPlayBtnOut, this);
 		this.playBtn.anchor.set(0.5);
 
-		this.soundBtn = this.add.button(center.x, center.y+400, 'sfxBtn', this.onSoundBtn, this);
+		this.soundBtn = new SfxButton(this.game, center.x, center.y + 500);
 		this.soundBtn.anchor.set(0.5);
+		this.add.existing(this.soundBtn);
+
+		this.howToBtn = new TextButton(this.game, center.x, center.y + 300, 'Як грати', 60, this.showTutorial, this);
+		this.howToBtn.anchor.set(0.5, 1);
+		this.add.existing(this.howToBtn);
 
 		this.playBtnOverTween = this.add.tween(this.playBtn).to({width: this.playBtn.width + 32}, 200, Phaser.Easing.Quadratic.In);
 		this.playBtnOutTween = this.add.tween(this.playBtn).to({width: this.playBtn.width}, 200, Phaser.Easing.Quadratic.In);
@@ -24,17 +30,12 @@ class MainMenu extends Phaser.State {
 	}
 	onPlayBtnOver(target, pointer){
 		this.playBtnOverTween.start();
-		
 	}
 	onPlayBtnOut(target, pointer){
 		this.playBtnOutTween.start();
 	}
-	onSoundBtn(){
-		if(this.sound.mute){
-			this.sound.mute = false;
-		}else{
-			this.sound.mute = true;
-		}
+	showTutorial(){
+		this.state.start('Tutorial');
 	}
 }
 

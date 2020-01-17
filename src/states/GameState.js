@@ -3,20 +3,19 @@ import MatchGrid from '../objects/MatchGrid';
 import ScoreLabel from '../objects/ScoreLabel';
 import ProgressTimer from '../objects/Timer';
 import GameOver from '../objects/GameOver';
+import SfxButton from '../objects/SfxButton';
 
 class GameState extends Phaser.State {
-	constructor(){
-		super();
-	}
-	preload(){
-		
-	}
 	create() {
 		let center = { x: this.game.world.centerX, y: this.game.world.centerY }
 		
-
-		this.scoreLabel = new ScoreLabel(this.game, center.x, 120, 0);
+		this.scoreLabel = new ScoreLabel(this.game, center.x, 150, 0);
 		this.add.existing(this.scoreLabel);
+
+		this.soundBtn = new SfxButton(this.game, this.world.width -20, 30);
+		this.soundBtn.scale.set(0.8);
+		this.soundBtn.anchor.set(1,0);
+		this.game.add.existing(this.soundBtn);
 
 		let timerWidth = 680,
 			timerHeight = 80;
@@ -27,8 +26,9 @@ class GameState extends Phaser.State {
 		this.matchGrid = new MatchGrid(this.game,(this.world.width-gridWidth)/2, 400, gridWidth, gridHeight, 7, 7);
 		this.matchGrid.onTimeAdd.add(this.timer.addSeconds, this.timer);
 		this.matchGrid.onScoreChanged.add(this.scoreLabel.setValue, this.scoreLabel);
+		
 		let g = this.game.make.graphics(0,0);
-		g.beginFill(0xaaaaaa, 0.6);
+		g.beginFill(0xaaaaaa, 0.8);
 		g.drawRect(0,0, this.world.width, this.game.world.height);
 		g.endFill();
 		this.gameOver = new GameOver(this.game, 0,0, g.generateTexture());
@@ -37,8 +37,8 @@ class GameState extends Phaser.State {
 		this.gameOver.onRestart.add(this.restartGame, this);
 		this.gameOver.onMenu.add(this.endGame, this);
 
-		//this.timer.onTimeUp.add(this.matchGrid.disable, this.matchGrid);
-		//this.timer.onTimeUp.add(this.onTimeUp, this);
+		this.timer.onTimeUp.add(this.matchGrid.disable, this.matchGrid);
+		this.timer.onTimeUp.add(this.onTimeUp, this);
 
 		this.startGame();
 	}

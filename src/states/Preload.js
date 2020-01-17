@@ -14,13 +14,14 @@ class Preload extends Phaser.State {
 		this.load.image('item4','assets/images/game/gem-04.png');
 		this.load.image('item5','assets/images/game/gem-05.png');
 		this.load.image('item6','assets/images/game/gem-06.png');
-		this.load.image('item7','assets/images/game/gem-07.png');
-		this.load.image('item8','assets/images/game/gem-08.png');
-		this.load.image('item9','assets/images/game/gem-09.png');
-		this.load.image('item10','assets/images/game/gem-10.png');
-		this.load.image('item11','assets/images/game/gem-11.png');
-		this.load.image('item12','assets/images/game/gem-12.png');
+		// this.load.image('item7','assets/images/game/gem-07.png');
+		// this.load.image('item8','assets/images/game/gem-08.png');
+		// this.load.image('item9','assets/images/game/gem-09.png');
+		// this.load.image('item10','assets/images/game/gem-10.png');
+		// this.load.image('item11','assets/images/game/gem-11.png');
+		// this.load.image('item12','assets/images/game/gem-12.png');
 		this.load.image('itemShadow','assets/images/game/shadow.png');
+		this.load.image('hand','assets/images/game/hand.png');
 		this.load.audio('background', 'assets/audio/background.mp3');
 		this.load.audio('kill', 'assets/audio/kill.mp3');
 		this.load.audio('select', 'assets/audio/select-1.mp3');
@@ -37,10 +38,10 @@ class Preload extends Phaser.State {
 	}
 	startGame(){
 		this.bgAudio = this.add.audio('background', 0.3, true)
-		//this.bgAudio.play();
-		//this.sound.onUnMute.add(()=>{this.bgAudio.play()});
-		//this.state.start('MainMenu');
-		this.state.start('GameState');
+		this.bgAudio.play();
+		this.sound.onUnMute.add(()=>{this.bgAudio.play()});
+		this.state.start('MainMenu');
+		//this.state.start('GameState');
 	}
 }
 

@@ -49,42 +49,36 @@ class MatchGrid extends Group{
 		this.selectedItems = [];
 		this.lastSelected = null;
 		this.firstSelected = null;
+		this.itemsGrid.forEach(el=> el.setRandomType());
 		for(let i = 0; i < this.itemsGrid.length; ++i){
 			let item = this.itemsGrid[i];
-			//item.setRandomType();
 			this.checkDifference(item);
 		}
 		this.spawnItems();
 		this.onScoreChanged.dispatch(this.scores);
 	}
 	spawnItems(){
-		this.itemsGrid.forEach(el=> el.spawn());
+		this.itemsGrid.forEach(el=> el.playSpawn());
 		this.enable();
 	}
 	checkDifference(item){
 		let r = item.row, c = item.column;
 		let exc;
 		if(r-1 >= 0 && r+1 < this.rows){
-			console.log('row diff');
 			let p = this.itemsGrid[this.ij(r-1,c)],
 				n = this.itemsGrid[this.ij(r+1,c)];
 			if(p.type === item.type && n.type === item.type){
 				exc = item.type;
-				console.log('exc ' + exc);
 			}
 		}
 		if(!exc && c-1 >= 0 && c+1 < this.cols){
-			console.log('col diff');
 			let p = this.itemsGrid[this.ij(r,c-1)],
 				n = this.itemsGrid[this.ij(r,c+1)];
 			if(p.type === item.type && n.type === item.type){
 				exc = item.type;
-				console.log('exc ' + exc);
 			}
 		}
-		if(exc)
-			item.setRandomTypeExcept(exc);
-
+		if(exc) item.setRandomTypeExcept(exc);
 	}
 	ij(i,j){
 		return i*this.cols+j;
@@ -114,14 +108,14 @@ class MatchGrid extends Group{
 			}
 		}
 	}
-	onItemOver(target, pointer){
-		if(pointer.isDown && target instanceof MatchItem){
-			this.endSwap(target);
-		}
-	}
 	onItemDown(target, pointer){
 		if(target instanceof MatchItem){
 			this.beginSwap(target);
+		}
+	}
+	onItemOver(target, pointer){
+		if(pointer.isDown && target instanceof MatchItem){
+			this.endSwap(target);
 		}
 	}
 	onItemUp(target, pointer){
@@ -136,46 +130,32 @@ class MatchGrid extends Group{
 		}
 		
 	}
-	endSwap(item){
-		if(this.isTrying && !this.lastSelected){
+	async endSwap(item){
+		if(this.isTrying && this.firstSelected && !this.lastSelected){
 			if(this.isNeighborTo(this.firstSelected, item)){
 				//this.selectItem(item);
 				this.lastSelected = item;
-				this.swapItems(this.firstSelected, this.lastSelected);
+				await this.swapItems(this.firstSelected, this.lastSelected);
 				this.checkMatchAtItem(this.firstSelected);
 				this.checkMatchAtItem(this.lastSelected);
-				console.log('try select , items length '+this.selectedItems.length);
 				if(this.selectedItems.length < this.minMatchNum){
-					setTimeout(()=>{
-						this.swapItems(this.firstSelected, this.lastSelected);
-						this.firstSelected = this.lastSelected = null;
-						this.isTrying = false;
-					},300);
-					
+					await this.swapItems(this.firstSelected, this.lastSelected);
+					this.firstSelected = this.lastSelected = null;
 				}else{
-					this.checkSelected();
-					this.isTrying = false;
+					await this.checkSelected();
 				}
-				
 			}
-			
+			this.isTrying = false;
 		}
 	}
-	checkSelected(){
-		if(this.selectedItems.length >= this.minMatchNum){
+	async checkSelected(){
+		if(this.selectedItems.length >= this.minMatchNum && this.enabled){
 			this.collectSelected();
-			this.removeSelected();
-			setTimeout(()=> {
-				this.fallDown();
-				this.spawnRemoved();
-			}, 500);
-			setTimeout(()=> {
-				this.checkMatches();
-				this.checkSelected();
-			}, 1000);
-		}else{
-			
-			//this.unselectAllItems();
+			await this.playRemoveSelected(300);
+			this.fallDown();
+			await this.playSpawnRemoved(300);
+			this.checkMatches();
+			this.checkSelected();
 		}
 	}
 	selectItem(item){
@@ -205,15 +185,27 @@ class MatchGrid extends Group{
 		this.popupText.showUpAt(rItem.x, rItem.y, collectedScores+'');
 		this.onScoreChanged.dispatch(this.scores);
 	}
-	removeSelected(){
+	playRemoveSelected(s=500){
 		this.killSound.play();
-		this.selectedItems.forEach(el => el.remove());
-		this.lastSelected = this.firstSelected = null;
-		this.removedItems.push(...this.selectedItems.splice(0));
-		//this.spawnSomeItems(this.selectedItems.splice(0));
+		this.selectedItems.forEach(el => el.playRemove(s));
+		return new Promise(resolve => {
+			setTimeout(()=>{
+				this.removedItems.push(...this.selectedItems.splice(0));
+				this.lastSelected = this.firstSelected = null;
+				resolve();
+			}, s);
+		});
 	}
-	spawnRemoved(){
-		this.removedItems.splice(0).forEach(el => el.spawnRandom());
+	playSpawnRemoved(s=500){
+		this.removedItems.splice(0).forEach(el => {
+			el.setRandomType();
+			el.playSpawn(s);
+		});
+		return new Promise(resolve => {
+			setTimeout(()=>{
+				resolve();
+			}, s);
+		})
 	}
 	checkMatchAtItem(item){
 		let ir = item.row, 
@@ -272,37 +264,31 @@ class MatchGrid extends Group{
 		}
 	}
 	checkMatchAtRow(r){
-		console.log('check row '+r);
 		let item,item2, c, c1;
 		for(c = 0; c < this.cols; ++c){
 			item = this.itemsGrid[r*this.cols+c];
-			c1 = c+1
-			for(; c1 < this.cols; ++c1){
+			for(c1 = c+1; c1 < this.cols; ++c1){
 				item2 = this.itemsGrid[r*this.cols+c1];
 				if(item.type !== item2.type) break;
 			}
 			if(c1 - c >= this.minMatchNum){
-				console.log('range '+(c1-c));
 				this.selectRow(r, c, c1);
 			}
-			c = c1;
+			c = c1-1;
 		}
 	}
 	checkMatchAtCol(c){
-		console.log('check col '+c);
 		let item, item2, r, r1;
 		for(r = 0; r < this.rows; ++r){
 			item = this.itemsGrid[r*this.cols+c];
-			r1 = r+1
-			for(; r1 < this.rows; ++r1){
+			for(r1 = r+1; r1 < this.rows; ++r1){
 				item2 = this.itemsGrid[r1*this.cols+c];
 				if(item.type !== item2.type) break;
 			}
 			if(r1 - r >= this.minMatchNum){
-				console.log('range '+(r1-r));
 				this.selectColumn(c, r, r1);
 			}
-			r = r1;
+			r = r1-1;
 		}
 		
 	}
@@ -326,6 +312,11 @@ class MatchGrid extends Group{
 	}
 	swapItems(item1, item2){
 		this.swapItemsByIndex(item1.row*this.cols + item1.column, item2.row* this.cols + item2.column);
+		return new Promise(resolve => {
+			setTimeout(()=>{
+				resolve();
+			}, 200)
+		});
 	}
 	swapItemsByIndex(i, j){
 		let item = this.itemsGrid[i],
@@ -338,7 +329,6 @@ class MatchGrid extends Group{
 	selectRow(r, c1, c2){
 		let c = c1 || 0;
 		let ct = c2 || this.cols;
-		console.log('selected row '+r+' are '+(ct-c));
 		while(c < ct){
 			let item = this.itemsGrid[r*this.cols+c];
 			if(!item.isSelected && item.alive){
@@ -351,7 +341,6 @@ class MatchGrid extends Group{
 	selectColumn(c, r1, r2){
 		let r = r1 || 0;
 		let rt = r2 || this.rows;
-		console.log('selected col '+c+' are '+(rt-r));
 		while(r < rt){
 			let item = this.itemsGrid[r*this.cols+c];
 			if(!item.isSelected && item.alive){
@@ -378,10 +367,8 @@ class MatchGrid extends Group{
 		this.scoreMultiplier *= n;
 	}
 	isNeighborTo(item, neighbor){
-		if(Math.abs(item.row - neighbor.row) <= 1 && Math.abs(item.column - neighbor.column) <= 1){
-			return true;
-		}
-		return false;
+		return ((item.column === neighbor.column && Math.abs(item.row - neighbor.row) <= 1) || 
+			(item.row === neighbor.row && Math.abs(item.column - neighbor.column) <= 1));
 	}
 }
 

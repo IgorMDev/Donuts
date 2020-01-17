@@ -8,14 +8,13 @@ class MatchItem extends Sprite {
 		this.column = column;
 		this.isSelected = false;
 		this.anchor.set(0.5);
-
+		
 		this.events.onInputOver.add(this.onOver, this);
 		this.events.onInputOut.add(this.onOut, this);
 		this.overTween = this.game.add.tween(this.scale).to({x: 1.1, y:1.1}, 200);
 		this.outTween = this.game.add.tween(this.scale).to({x: 1, y:1}, 200);
-		this.spawnTween = this.game.add.tween(this.scale).to({x: 1, y: 1}, 500, );
-		this.removeTween = this.game.add.tween(this.scale).to({x: 0, y:0}, 500, Phaser.Easing.Back.In);
 		this.selectedTween = this.game.add.tween(this).to({alpha: 0.5}, 500).yoyo(true);
+
 		this.type = 1;
 		this.setRandomType();
 		this.name = MatchItem.Names[this.type];
@@ -25,27 +24,25 @@ class MatchItem extends Sprite {
 		this.item.anchor.set(0.5);
 		this.addChild(this.shadow);
 		this.addChild(this.item);
-		this.scale.set(0);
-		this.spawnTween.start();
 	}
 	spawn(){
 		let name = MatchItem.Names[this.type];
 		if(name !== this.name) this.item.loadTexture(this.name=name);
-		
 		this.unselect();
 		this.alive = true;
-		this.scale.set(0);
-		this.spawnTween.start();
-	}
-	spawnRandom(bonus = false){
-		this.setRandomType(bonus);
-		
-		this.spawn();
 	}
 	remove(){
 		this.unselect();
 		this.alive = false;
-		this.removeTween.start();
+	}
+	playSpawn(s=500){
+		this.spawn();
+		this.scale.set(0);
+		this.game.add.tween(this.scale).to({x: 1, y: 1}, s, Phaser.Easing.Back.Out, true);
+	}
+	playRemove(s=500){
+		this.remove();
+		this.game.add.tween(this.scale).to({x: 0, y:0}, s, Phaser.Easing.Back.In, true);
 	}
 	collect(){
 		let action = MatchItem.Actions[this.type];
@@ -54,7 +51,7 @@ class MatchItem extends Sprite {
 	}
 	select(){
 		if(this.alive && !this.isSelected){
-			//this.selectedTween.loop(true).start();
+			this.selectedTween.loop(true).start();
 			this.isSelected = true;
 		}
 	}
@@ -83,7 +80,6 @@ class MatchItem extends Sprite {
 		}
 	}
 	setRandomTypeExcept(...types){
-		console.log('rand except '+types);
 		do{
 			this.type = this.game.rnd.pick(Object.keys(MatchItem.Types));
 		}while(types.indexOf(this.type) >= 0);
