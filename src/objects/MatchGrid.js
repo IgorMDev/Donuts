@@ -85,7 +85,6 @@ class MatchGrid extends Group{
 	}
 	enable(){
 		if(!this.enabled){
-			this.game.input.onUp.add(this.onItemUp, this);
 			this.itemsGroup.onChildInputOver.add(this.onItemOver, this);
 			this.itemsGroup.onChildInputDown.add(this.onItemDown, this);
 			this.enabled = true;
@@ -93,7 +92,6 @@ class MatchGrid extends Group{
 	}
 	disable(){
 		if(this.enabled){
-			this.game.input.onUp.remove(this.onItemUp, this);
 			this.itemsGroup.onChildInputOver.remove(this.onItemOver, this);
 			this.itemsGroup.onChildInputDown.remove(this.onItemDown, this);
 			this.unselectAllItems();
@@ -118,17 +116,12 @@ class MatchGrid extends Group{
 			this.endSwap(target);
 		}
 	}
-	onItemUp(target, pointer){
-		//this.endSwap();
-	}
-	
 	beginSwap(item){
 		if(!this.isTrying && item.isBasicType()){
 			this.firstSelected = item;
 			//this.selectItem(item);
 			this.isTrying = true;
 		}
-		
 	}
 	async endSwap(item){
 		if(this.isTrying && this.firstSelected && !this.lastSelected){
@@ -140,10 +133,10 @@ class MatchGrid extends Group{
 				this.checkMatchAtItem(this.lastSelected);
 				if(this.selectedItems.length < this.minMatchNum){
 					await this.swapItems(this.firstSelected, this.lastSelected);
-					this.firstSelected = this.lastSelected = null;
 				}else{
 					await this.checkSelected();
 				}
+				this.firstSelected = this.lastSelected = null;
 			}
 			this.isTrying = false;
 		}
@@ -188,10 +181,9 @@ class MatchGrid extends Group{
 	playRemoveSelected(s=500){
 		this.killSound.play();
 		this.selectedItems.forEach(el => el.playRemove(s));
+		this.removedItems.push(...this.selectedItems.splice(0));
 		return new Promise(resolve => {
 			setTimeout(()=>{
-				this.removedItems.push(...this.selectedItems.splice(0));
-				this.lastSelected = this.firstSelected = null;
 				resolve();
 			}, s);
 		});
@@ -203,6 +195,7 @@ class MatchGrid extends Group{
 		});
 		return new Promise(resolve => {
 			setTimeout(()=>{
+				//this.lastSelected = this.firstSelected = null;
 				resolve();
 			}, s);
 		})

@@ -9,6 +9,7 @@ class Tutorial extends State{
 			fill: 'white'
 		});
 		title.anchor.set(0.5,0);
+		title.setShadow(5,5,'rgba(32,32,32,0.8)', 5);
 
 		this.items = this.game.add.group();
 		this.items.addMultiple([
@@ -41,6 +42,7 @@ class Tutorial extends State{
 			align: 'center'
 		});
 		desc.anchor.set(0.5);
+		desc.setShadow(5,5,'rgba(32,32,32,0.8)', 5);
 
 		let closeBtn = new TextButton(this.game, center.x, center.y+550, 'Закрити', 60, this.close, this);
 		closeBtn.anchor.set(0.5);

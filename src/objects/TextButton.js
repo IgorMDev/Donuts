@@ -8,7 +8,9 @@ class TextButton extends Button{
 			fill: 'white'
 		});
 		this.label.anchor.set(0.5);
+		this.label.setShadow(5,5,'rgba(32,32,32,0.8)', 5);
 		this.addChild(this.label);
+
 	}
 }
 
