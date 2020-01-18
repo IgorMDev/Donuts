@@ -23,13 +23,13 @@ class GameState extends Phaser.State {
 
 		let gridWidth = 700,
 			gridHeight = 800;
-		this.matchGrid = new MatchGrid(this.game,(this.world.width-gridWidth)/2, 400, gridWidth, gridHeight, 7, 7);
+		this.matchGrid = new MatchGrid(this.game,(this.world.width-gridWidth)/2, 400, gridWidth, gridHeight, 8, 7);
 		this.matchGrid.onTimeAdd.add(this.timer.addSeconds, this.timer);
 		this.matchGrid.onScoreChanged.add(this.scoreLabel.setValue, this.scoreLabel);
-		
+
 		let g = this.game.make.graphics(0,0);
 		g.beginFill(0xaaaaaa, 0.8);
-		g.drawRect(0,0, this.world.width, this.game.world.height);
+		g.drawRect(0,0, this.world.width, this.world.height);
 		g.endFill();
 		this.gameOver = new GameOver(this.game, 0,0, g.generateTexture());
 		this.gameOver.visible = false;
